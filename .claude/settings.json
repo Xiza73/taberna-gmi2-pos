@@ -1,0 +1,45 @@
+{
+  "$schema": "https://claude.ai/schemas/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(pnpm dev)",
+      "Bash(pnpm build)",
+      "Bash(pnpm preview)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test:ci)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm lint:fix)",
+      "Bash(pnpm format)",
+      "Bash(pnpm format:check)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm install)",
+      "Bash(pnpm add)",
+      "Bash(pnpx tsc --noEmit)",
+      "Bash(git status)",
+      "Bash(git diff)",
+      "Bash(git log)",
+      "Bash(git add)",
+      "Bash(git commit)",
+      "Bash(git branch)",
+      "Bash(git checkout)",
+      "Bash(git switch)",
+      "Bash(git merge)",
+      "Bash(git stash)",
+      "Bash(git pull)",
+      "Bash(ls)",
+      "Bash(tree)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(git push --force)",
+      "Bash(git reset --hard)",
+      "Bash(npm publish)"
+    ]
+  },
+  "env": {
+    "VITE_API_BASE_URL": "http://localhost:3000/api"
+  }
+}

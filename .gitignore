@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+dev-dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Claude Code — archivos personales (NO commitear)
+CLAUDE.local.md
+.claude/settings.local.json
+# El código generado por Figma va en `.claude/ui-design/` y NO se commitea,
+# pero el README con las instrucciones de uso sí (para que futuros devs lo vean).
+.claude/ui-design/*
+!.claude/ui-design/README.md
