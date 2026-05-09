@@ -7,7 +7,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { RootLayout } from '@/layouts/RootLayout';
 import { PosLayout } from '@/layouts/PosLayout';
 import { PublicAuthLayout } from '@/layouts/PublicAuthLayout';
-import { HomePage } from '@/pages/HomePage';
+import { NewSalePage } from '@/pages/NewSalePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { authKeys } from '@/features/auth';
 import { staffAuthApi } from '@/api/staffAuthApi';
@@ -24,7 +24,7 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 //
 // `beforeLoad` hace `ensureQueryData(/me)`. Si falla → redirige a /login.
 // Si el rol resulta ser `user` (sin permisos para POS), igual entra y la
-// HomePage muestra el estado "sin permisos" (los endpoints van a devolver
+// NewSalePage muestra el estado "sin permisos" (los endpoints van a devolver
 // 403 de cualquier modo).
 const posLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -43,10 +43,10 @@ const posLayoutRoute = createRoute({
   },
 });
 
-const homeRoute = createRoute({
+const newSaleRoute = createRoute({
   getParentRoute: () => posLayoutRoute,
   path: '/',
-  component: HomePage,
+  component: NewSalePage,
 });
 
 // --- Public auth (login) — redirect to / if already authed ---
@@ -67,6 +67,6 @@ const loginRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
-  posLayoutRoute.addChildren([homeRoute]),
+  posLayoutRoute.addChildren([newSaleRoute]),
   publicAuthLayoutRoute.addChildren([loginRoute]),
 ]);
