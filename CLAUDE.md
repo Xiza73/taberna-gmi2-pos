@@ -152,7 +152,7 @@ endpoints que el backoffice (`/staff/auth/*`).
 
 | Variable | Default dev | Notas |
 |---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:3000/api` | Base URL del backend |
+| `VITE_API_BASE_URL` | `http://localhost:3000/api/v1` | Base URL del backend (incluye prefix `/api/v1` que setea el back en `setGlobalPrefix`) |
 
 El POS no necesita Google OAuth, MercadoPago public key ni datos de tienda
 en envs (el back hace la integración con MP cuando la venta es por

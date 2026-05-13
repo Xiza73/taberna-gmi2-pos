@@ -2,6 +2,7 @@ import { Outlet } from '@tanstack/react-router';
 import { LogOut, Sparkles, User, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth';
+import { CashRegisterStatusBadge } from '@/features/cashbox';
 
 /**
  * Layout principal de la app autenticada (staff). Header chico siempre
@@ -37,6 +38,7 @@ export function PosLayout() {
               <span className="hidden sm:inline">Modo offline</span>
             </span>
           )}
+          <CashRegisterStatusBadge />
           {me && (
             <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
               <User size={14} />
