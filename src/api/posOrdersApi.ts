@@ -1,4 +1,5 @@
 import type {
+  CancelPosOrderInput,
   CreatePosOrderInput,
   PosOrderFilters,
   PosOrderListResponse,
@@ -30,5 +31,17 @@ export const posOrdersApi = {
   /** GET /admin/pos/orders/:id — detalle con items + events. */
   get(id: string): Promise<PosOrderResponse> {
     return apiClient.get<PosOrderResponse>(`/admin/pos/orders/${id}`);
+  },
+
+  /**
+   * POST /admin/pos/orders/:id/cancel — anula la venta. Restaura stock,
+   * decrementa coupon uses si aplica, registra OrderEvent con el motivo
+   * + nombre del staff. Solo permitido si la orden está en `paid`.
+   */
+  cancel(id: string, input: CancelPosOrderInput): Promise<PosOrderResponse> {
+    return apiClient.post<PosOrderResponse>(
+      `/admin/pos/orders/${id}/cancel`,
+      input,
+    );
   },
 };
