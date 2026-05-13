@@ -62,6 +62,18 @@ export interface PosOrderItemResponse {
   subtotal: number;
 }
 
+export interface PosOrderEventResponse {
+  id: string;
+  orderId: string;
+  /** Tipo del evento (ej. 'order_created', 'order_paid', 'order_cancelled'). */
+  type: string;
+  description: string;
+  staffId: string | null;
+  staffName: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface PosOrderResponse {
   id: string;
   orderNumber: string;
@@ -82,7 +94,34 @@ export interface PosOrderResponse {
   customerDocNumber: string | null;
   notes: string | null;
   createdAt: string;
+  /** Presente sólo en el detalle (GET /admin/pos/orders/:id). */
   items?: PosOrderItemResponse[];
+  /** Presente sólo en el detalle (GET /admin/pos/orders/:id). */
+  events?: PosOrderEventResponse[];
   /** Solo presente si paymentMethod === 'mercadopago'. */
   paymentUrl?: string | null;
+}
+
+/**
+ * Filtros aceptados por GET /admin/pos/orders. Espejo de
+ * `PosOrderFiltersDto` en el back. `dateFrom` / `dateTo` son ISO strings
+ * (el back usa BETWEEN sobre `createdAt`).
+ */
+export interface PosOrderFilters {
+  page?: number;
+  limit?: number;
+  status?: OrderStatus;
+  paymentMethod?: PaymentMethod;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  sortBy?: 'createdAt' | 'total';
+}
+
+export interface PosOrderListResponse {
+  /** Cada item es la versión liviana (sin `items` ni `events`). */
+  items: PosOrderResponse[];
+  total: number;
+  page: number;
+  limit: number;
 }

@@ -8,6 +8,7 @@ import { RootLayout } from '@/layouts/RootLayout';
 import { PosLayout } from '@/layouts/PosLayout';
 import { PublicAuthLayout } from '@/layouts/PublicAuthLayout';
 import { NewSalePage } from '@/pages/NewSalePage';
+import { SalesPage } from '@/pages/SalesPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { authKeys } from '@/features/auth';
 import { staffAuthApi } from '@/api/staffAuthApi';
@@ -49,6 +50,12 @@ const newSaleRoute = createRoute({
   component: NewSalePage,
 });
 
+const salesRoute = createRoute({
+  getParentRoute: () => posLayoutRoute,
+  path: '/sales',
+  component: SalesPage,
+});
+
 // --- Public auth (login) — redirect to / if already authed ---
 const publicAuthLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -67,6 +74,6 @@ const loginRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
-  posLayoutRoute.addChildren([newSaleRoute]),
+  posLayoutRoute.addChildren([newSaleRoute, salesRoute]),
   publicAuthLayoutRoute.addChildren([loginRoute]),
 ]);

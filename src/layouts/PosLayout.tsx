@@ -1,8 +1,13 @@
-import { Outlet } from '@tanstack/react-router';
+import { Link, Outlet } from '@tanstack/react-router';
 import { LogOut, Sparkles, User, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth';
 import { CashRegisterStatusBadge } from '@/features/cashbox';
+import { cn } from '@/utils/cn';
+
+const NAV_BASE_CLASSES =
+  'px-2.5 py-1 rounded-sm text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors';
+const NAV_ACTIVE_CLASSES = 'bg-muted text-foreground';
 
 /**
  * Layout principal de la app autenticada (staff). Header chico siempre
@@ -19,16 +24,35 @@ export function PosLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="h-14 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <Sparkles size={14} className="text-primary-foreground" />
-          </span>
-          <span
-            className="text-base tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
-          >
-            POS Lumière
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <Sparkles size={14} className="text-primary-foreground" />
+            </span>
+            <span
+              className="text-base tracking-tight"
+              style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
+            >
+              POS Lumière
+            </span>
+          </div>
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link
+              to="/"
+              className={NAV_BASE_CLASSES}
+              activeProps={{ className: cn(NAV_BASE_CLASSES, NAV_ACTIVE_CLASSES) }}
+              activeOptions={{ exact: true }}
+            >
+              Nueva venta
+            </Link>
+            <Link
+              to="/sales"
+              className={NAV_BASE_CLASSES}
+              activeProps={{ className: cn(NAV_BASE_CLASSES, NAV_ACTIVE_CLASSES) }}
+            >
+              Ventas del día
+            </Link>
+          </nav>
         </div>
 
         <div className="flex items-center gap-3">
