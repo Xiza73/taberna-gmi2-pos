@@ -56,6 +56,24 @@ export interface CancelPosOrderInput {
   reason: string;
 }
 
+export interface RefundPosOrderItemInput {
+  orderItemId: string;
+  quantity: number;
+}
+
+export interface RefundPosOrderInput {
+  /**
+   * Items a devolver con sus cantidades. Si se omite o es array vacío,
+   * el back lo interpreta como devolución TOTAL: restaura todo el
+   * stock y deja la orden en status `refunded`. Si se especifica un
+   * subconjunto, es devolución PARCIAL: restaura stock parcial pero el
+   * status NO cambia.
+   */
+  items?: RefundPosOrderItemInput[];
+  /** Motivo de la devolución. Required, max 500. Queda en OrderEvent. */
+  reason: string;
+}
+
 export interface PosOrderItemResponse {
   id: string;
   productId: string;

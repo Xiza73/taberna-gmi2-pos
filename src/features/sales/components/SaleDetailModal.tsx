@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { cn } from '@/utils/cn';
+import { useAuth } from '@/features/auth';
 import { formatCents, formatTime } from '@/features/cashbox/lib/formatters';
 import { formatDateTime } from '@/utils/format';
 import type {
@@ -19,6 +20,7 @@ import {
   getStatusChipClasses,
 } from '../lib/labels';
 import { CancelOrderDialog } from './CancelOrderDialog';
+import { RefundOrderDialog } from './RefundOrderDialog';
 
 interface Props {
   /** ID de la orden a mostrar. Si es null el modal está cerrado. */
@@ -33,7 +35,9 @@ interface Props {
 export function SaleDetailModal({ id, onOpenChange }: Props) {
   const open = id !== null;
   const { data, isLoading, isError } = usePosOrder(id);
+  const { role } = useAuth();
   const [showCancel, setShowCancel] = useState(false);
+  const [showRefund, setShowRefund] = useState(false);
 
   function handleCancelled() {
     // Cerramos ambos: el dialog de cancelación y el detalle. La lista
@@ -42,6 +46,13 @@ export function SaleDetailModal({ id, onOpenChange }: Props) {
     setShowCancel(false);
     onOpenChange(false);
   }
+
+  function handleRefunded() {
+    setShowRefund(false);
+    onOpenChange(false);
+  }
+
+  const canRefund = role === 'super_admin';
 
   return (
     <>
@@ -64,17 +75,29 @@ export function SaleDetailModal({ id, onOpenChange }: Props) {
               order={data}
               onClose={() => onOpenChange(false)}
               onRequestCancel={() => setShowCancel(true)}
+              onRequestRefund={() => setShowRefund(true)}
+              canRefund={canRefund}
             />
           )}
         </ModalContent>
       </Modal>
       {data && (
-        <CancelOrderDialog
-          open={showCancel}
-          onOpenChange={setShowCancel}
-          order={data}
-          onCancelled={handleCancelled}
-        />
+        <>
+          <CancelOrderDialog
+            open={showCancel}
+            onOpenChange={setShowCancel}
+            order={data}
+            onCancelled={handleCancelled}
+          />
+          {canRefund && (
+            <RefundOrderDialog
+              open={showRefund}
+              onOpenChange={setShowRefund}
+              order={data}
+              onRefunded={handleRefunded}
+            />
+          )}
+        </>
       )}
     </>
   );
@@ -102,9 +125,17 @@ interface DetailBodyProps {
   order: PosOrderResponse;
   onClose: () => void;
   onRequestCancel: () => void;
+  onRequestRefund: () => void;
+  canRefund: boolean;
 }
 
-function DetailBody({ order, onClose, onRequestCancel }: DetailBodyProps) {
+function DetailBody({
+  order,
+  onClose,
+  onRequestCancel,
+  onRequestRefund,
+  canRefund,
+}: DetailBodyProps) {
   const items = order.items ?? [];
   const events = order.events ?? [];
   const hasDocument = order.customerDocType && order.customerDocNumber;
@@ -200,7 +231,7 @@ function DetailBody({ order, onClose, onRequestCancel }: DetailBodyProps) {
       </section>
 
       <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-1">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {order.status === 'paid' && (
             <Button
               type="button"
@@ -211,6 +242,17 @@ function DetailBody({ order, onClose, onRequestCancel }: DetailBodyProps) {
               Anular venta
             </Button>
           )}
+          {canRefund &&
+            (order.status === 'paid' || order.status === 'processing') && (
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={onRequestRefund}
+              >
+                Devolver
+              </Button>
+            )}
         </div>
         <Button type="button" variant="outline" size="md" onClick={onClose}>
           Cerrar

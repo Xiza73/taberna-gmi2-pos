@@ -4,6 +4,7 @@ import type {
   PosOrderFilters,
   PosOrderListResponse,
   PosOrderResponse,
+  RefundPosOrderInput,
 } from '@/types/posOrder';
 import { apiClient } from './client';
 
@@ -41,6 +42,19 @@ export const posOrdersApi = {
   cancel(id: string, input: CancelPosOrderInput): Promise<PosOrderResponse> {
     return apiClient.post<PosOrderResponse>(
       `/admin/pos/orders/${id}/cancel`,
+      input,
+    );
+  },
+
+  /**
+   * POST /admin/pos/orders/:id/refund — devuelve la venta total o
+   * parcialmente. Total: omitir `items` → restaura todo + status
+   * `refunded`. Parcial: enviar items con cantidades → restaura stock
+   * parcial, status NO cambia. Solo super_admin (back valida).
+   */
+  refund(id: string, input: RefundPosOrderInput): Promise<PosOrderResponse> {
+    return apiClient.post<PosOrderResponse>(
+      `/admin/pos/orders/${id}/refund`,
       input,
     );
   },
