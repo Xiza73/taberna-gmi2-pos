@@ -47,6 +47,16 @@ export function computeAmountHint(value: string, baseHint: string): string {
   return `= ${formatCents(cents)}`;
 }
 
+/** ISO date string → "14:30" (24h, hora local del navegador). */
+export function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('es-PE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
 /** ISO date string → "2h 15m" / "5m" / "<1m". */
 export function formatElapsed(fromIso: string, now: number = Date.now()): string {
   const elapsedMs = now - new Date(fromIso).getTime();

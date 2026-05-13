@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Wallet, WalletCards } from 'lucide-react';
+import { ArrowDownUp, Wallet, WalletCards } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useCurrentCashRegister } from '../hooks/useCurrentCashRegister';
 import { formatCents, formatElapsed } from '../lib/formatters';
 import { CloseCashRegisterDialog } from './CloseCashRegisterDialog';
+import { MovementsDialog } from './MovementsDialog';
 import { OpenCashRegisterDialog } from './OpenCashRegisterDialog';
 
-type DialogState = 'open' | 'close' | null;
+type DialogState = 'open' | 'close' | 'movements' | null;
 
 /**
  * Badge en el header del POS que muestra el estado de la caja:
@@ -87,25 +88,44 @@ export function CashRegisterStatusBadge() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setDialog('close')}
-        aria-label={`Cerrar caja registradora — abierta hace ${elapsed}`}
-        className={cn(
-          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm',
-          'bg-emerald-500/10 text-emerald-400 text-xs',
-          'hover:bg-emerald-500/20 transition-colors',
-        )}
-      >
-        <WalletCards size={12} />
-        <span className="hidden sm:inline tabular-nums">
-          Caja {formatCents(current.initialAmount)} · {elapsed}
-        </span>
-      </button>
+      <div className="inline-flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setDialog('close')}
+          aria-label={`Cerrar caja registradora — abierta hace ${elapsed}`}
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm',
+            'bg-emerald-500/10 text-emerald-400 text-xs',
+            'hover:bg-emerald-500/20 transition-colors',
+          )}
+        >
+          <WalletCards size={12} />
+          <span className="hidden sm:inline tabular-nums">
+            Caja {formatCents(current.initialAmount)} · {elapsed}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setDialog('movements')}
+          aria-label="Registrar o ver movimientos del turno"
+          title="Movimientos del turno"
+          className={cn(
+            'inline-flex items-center justify-center px-1.5 py-1 rounded-sm',
+            'bg-emerald-500/10 text-emerald-400',
+            'hover:bg-emerald-500/20 transition-colors',
+          )}
+        >
+          <ArrowDownUp size={12} />
+        </button>
+      </div>
       <CloseCashRegisterDialog
         open={dialog === 'close'}
         onOpenChange={(o) => setDialog(o ? 'close' : null)}
         current={current}
+      />
+      <MovementsDialog
+        open={dialog === 'movements'}
+        onOpenChange={(o) => setDialog(o ? 'movements' : null)}
       />
     </>
   );
