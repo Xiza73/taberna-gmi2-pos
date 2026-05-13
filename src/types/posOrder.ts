@@ -51,6 +51,11 @@ export interface CreatePosOrderInput {
   invoiceType?: 'boleta' | 'factura';
 }
 
+export interface CancelPosOrderInput {
+  /** Motivo de la anulación. Required, max 500 chars. Queda en el OrderEvent. */
+  reason: string;
+}
+
 export interface PosOrderItemResponse {
   id: string;
   productId: string;

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent } from '@/components/ui/Modal';
@@ -17,6 +18,7 @@ import {
   PAYMENT_METHOD_LABELS,
   getStatusChipClasses,
 } from '../lib/labels';
+import { CancelOrderDialog } from './CancelOrderDialog';
 
 interface Props {
   /** ID de la orden a mostrar. Si es null el modal está cerrado. */
@@ -31,27 +33,50 @@ interface Props {
 export function SaleDetailModal({ id, onOpenChange }: Props) {
   const open = id !== null;
   const { data, isLoading, isError } = usePosOrder(id);
+  const [showCancel, setShowCancel] = useState(false);
+
+  function handleCancelled() {
+    // Cerramos ambos: el dialog de cancelación y el detalle. La lista
+    // refresca por la invalidación del hook y el cajero ve la fila ya
+    // como "Anulado".
+    setShowCancel(false);
+    onOpenChange(false);
+  }
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent
-        title={data ? data.orderNumber : 'Detalle de venta'}
-        description={
-          data
-            ? `${ORDER_CHANNEL_LABELS[data.channel]} · ${formatDateTime(data.createdAt)}`
-            : 'Cargando información de la venta…'
-        }
-        maxWidth="max-w-2xl"
-      >
-        {isLoading ? (
-          <DetailLoading />
-        ) : isError || !data ? (
-          <DetailError />
-        ) : (
-          <DetailBody order={data} onClose={() => onOpenChange(false)} />
-        )}
-      </ModalContent>
-    </Modal>
+    <>
+      <Modal open={open} onOpenChange={onOpenChange}>
+        <ModalContent
+          title={data ? data.orderNumber : 'Detalle de venta'}
+          description={
+            data
+              ? `${ORDER_CHANNEL_LABELS[data.channel]} · ${formatDateTime(data.createdAt)}`
+              : 'Cargando información de la venta…'
+          }
+          maxWidth="max-w-2xl"
+        >
+          {isLoading ? (
+            <DetailLoading />
+          ) : isError || !data ? (
+            <DetailError />
+          ) : (
+            <DetailBody
+              order={data}
+              onClose={() => onOpenChange(false)}
+              onRequestCancel={() => setShowCancel(true)}
+            />
+          )}
+        </ModalContent>
+      </Modal>
+      {data && (
+        <CancelOrderDialog
+          open={showCancel}
+          onOpenChange={setShowCancel}
+          order={data}
+          onCancelled={handleCancelled}
+        />
+      )}
+    </>
   );
 }
 
@@ -76,9 +101,10 @@ function DetailError() {
 interface DetailBodyProps {
   order: PosOrderResponse;
   onClose: () => void;
+  onRequestCancel: () => void;
 }
 
-function DetailBody({ order, onClose }: DetailBodyProps) {
+function DetailBody({ order, onClose, onRequestCancel }: DetailBodyProps) {
   const items = order.items ?? [];
   const events = order.events ?? [];
   const hasDocument = order.customerDocType && order.customerDocNumber;
@@ -173,7 +199,19 @@ function DetailBody({ order, onClose }: DetailBodyProps) {
         <Timeline events={events} />
       </section>
 
-      <div className="flex justify-end pt-1">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-1">
+        <div className="flex gap-2">
+          {order.status === 'paid' && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="md"
+              onClick={onRequestCancel}
+            >
+              Anular venta
+            </Button>
+          )}
+        </div>
         <Button type="button" variant="outline" size="md" onClick={onClose}>
           Cerrar
         </Button>
