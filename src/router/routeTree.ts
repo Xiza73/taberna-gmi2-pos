@@ -1,14 +1,11 @@
-import {
-  createRootRouteWithContext,
-  createRoute,
-  redirect,
-} from '@tanstack/react-router';
+import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router';
 import type { QueryClient } from '@tanstack/react-query';
 import { RootLayout } from '@/layouts/RootLayout';
 import { PosLayout } from '@/layouts/PosLayout';
 import { PublicAuthLayout } from '@/layouts/PublicAuthLayout';
 import { NewSalePage } from '@/pages/NewSalePage';
 import { SalesPage } from '@/pages/SalesPage';
+import { ReportsPage } from '@/pages/ReportsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { authKeys } from '@/features/auth';
 import { staffAuthApi } from '@/api/staffAuthApi';
@@ -56,6 +53,12 @@ const salesRoute = createRoute({
   component: SalesPage,
 });
 
+const reportsRoute = createRoute({
+  getParentRoute: () => posLayoutRoute,
+  path: '/reports',
+  component: ReportsPage,
+});
+
 // --- Public auth (login) — redirect to / if already authed ---
 const publicAuthLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -74,6 +77,6 @@ const loginRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
-  posLayoutRoute.addChildren([newSaleRoute, salesRoute]),
+  posLayoutRoute.addChildren([newSaleRoute, salesRoute, reportsRoute]),
   publicAuthLayoutRoute.addChildren([loginRoute]),
 ]);

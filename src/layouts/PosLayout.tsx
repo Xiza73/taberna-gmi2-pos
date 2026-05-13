@@ -52,6 +52,13 @@ export function PosLayout() {
             >
               Ventas del día
             </Link>
+            <Link
+              to="/reports"
+              className={NAV_BASE_CLASSES}
+              activeProps={{ className: cn(NAV_BASE_CLASSES, NAV_ACTIVE_CLASSES) }}
+            >
+              Reportes
+            </Link>
           </nav>
         </div>
 
