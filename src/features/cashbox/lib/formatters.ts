@@ -59,7 +59,12 @@ export function formatTime(iso: string): string {
 
 /** ISO date string → "2h 15m" / "5m" / "<1m". */
 export function formatElapsed(fromIso: string, now: number = Date.now()): string {
-  const elapsedMs = now - new Date(fromIso).getTime();
+  return formatElapsedMs(new Date(fromIso).getTime(), now);
+}
+
+/** ms epoch → "2h 15m" / "5m" / "<1m". */
+export function formatElapsedMs(fromMs: number, now: number = Date.now()): string {
+  const elapsedMs = now - fromMs;
   const totalMinutes = Math.floor(elapsedMs / 60000);
   if (totalMinutes < 1) return '<1m';
   const hours = Math.floor(totalMinutes / 60);

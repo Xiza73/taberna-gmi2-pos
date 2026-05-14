@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ShieldOff } from 'lucide-react';
 import { useAuth } from '@/features/auth';
+import { RefreshCatalogButton } from '@/features/catalog';
 import {
   ChargeModal,
   ProductGrid,
@@ -58,8 +59,13 @@ export function NewSalePage() {
 
   return (
     <div className="h-full grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px]">
-      <div className="overflow-hidden">
-        <ProductGrid onProductClick={addItem} />
+      <div className="overflow-hidden flex flex-col min-h-0">
+        <div className="px-4 lg:px-6 pt-3 pb-1 shrink-0">
+          <RefreshCatalogButton />
+        </div>
+        <div className="flex-1 min-h-0">
+          <ProductGrid onProductClick={addItem} />
+        </div>
       </div>
       <div className="overflow-hidden border-t lg:border-t-0 border-border">
         <SaleCartSidebar onCharge={() => setIsChargeOpen(true)} />
