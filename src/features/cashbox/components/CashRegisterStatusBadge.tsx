@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownUp, Wallet, WalletCards } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/utils/cn';
 import { useCurrentCashRegister } from '../hooks/useCurrentCashRegister';
 import { formatCents, formatElapsed } from '../lib/formatters';
@@ -8,6 +9,8 @@ import { MovementsDialog } from './MovementsDialog';
 import { OpenCashRegisterDialog } from './OpenCashRegisterDialog';
 
 type DialogState = 'open' | 'close' | 'movements' | null;
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 /**
  * Badge en el header del POS que muestra el estado de la caja:
@@ -21,6 +24,7 @@ type DialogState = 'open' | 'close' | 'movements' | null;
  */
 export function CashRegisterStatusBadge() {
   const { data: current, isLoading, isError } = useCurrentCashRegister();
+  const isOnline = useOnlineStatus();
   const [dialog, setDialog] = useState<DialogState>(null);
   const [now, setNow] = useState<number>(() => Date.now());
 
@@ -51,8 +55,13 @@ export function CashRegisterStatusBadge() {
       <button
         type="button"
         onClick={() => setDialog('open')}
+        disabled={!isOnline}
         aria-label="Abrir caja registradora"
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-amber-500/10 text-amber-400 text-xs hover:bg-amber-500/20 transition-colors"
+        title={isOnline ? undefined : OFFLINE_TOOLTIP}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-amber-500/10 text-amber-400 text-xs hover:bg-amber-500/20 transition-colors',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-500/10',
+        )}
       >
         <Wallet size={12} />
         <span className="hidden sm:inline">Sin caja</span>
@@ -66,11 +75,14 @@ export function CashRegisterStatusBadge() {
         <button
           type="button"
           onClick={() => setDialog('open')}
+          disabled={!isOnline}
           aria-label="Abrir caja registradora"
+          title={isOnline ? undefined : OFFLINE_TOOLTIP}
           className={cn(
             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm',
             'bg-muted/40 text-muted-foreground text-xs',
             'hover:bg-muted/70 hover:text-foreground transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-muted/40 disabled:hover:text-muted-foreground',
           )}
         >
           <Wallet size={12} />
@@ -92,11 +104,14 @@ export function CashRegisterStatusBadge() {
         <button
           type="button"
           onClick={() => setDialog('close')}
+          disabled={!isOnline}
           aria-label={`Cerrar caja registradora — abierta hace ${elapsed}`}
+          title={isOnline ? undefined : OFFLINE_TOOLTIP}
           className={cn(
             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm',
             'bg-emerald-500/10 text-emerald-400 text-xs',
             'hover:bg-emerald-500/20 transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500/10',
           )}
         >
           <WalletCards size={12} />
@@ -107,12 +122,14 @@ export function CashRegisterStatusBadge() {
         <button
           type="button"
           onClick={() => setDialog('movements')}
+          disabled={!isOnline}
           aria-label="Registrar o ver movimientos del turno"
-          title="Movimientos del turno"
+          title={isOnline ? 'Movimientos del turno' : OFFLINE_TOOLTIP}
           className={cn(
             'inline-flex items-center justify-center px-1.5 py-1 rounded-sm',
             'bg-emerald-500/10 text-emerald-400',
             'hover:bg-emerald-500/20 transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-500/10',
           )}
         >
           <ArrowDownUp size={12} />
