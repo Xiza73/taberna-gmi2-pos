@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { ApiError } from '@/api/errors';
-import type {
-  CustomerDocType,
-  PaymentMethod,
-  PosOrderResponse,
-} from '@/types/posOrder';
+import type { CustomerDocType, PaymentMethod } from '@/types/posOrder';
 import { cn } from '@/utils/cn';
 import { formatPEN } from '@/utils/format';
-import { useCreatePosOrder } from '../hooks/useCreatePosOrder';
+import {
+  useCreatePosOrder,
+  type CreatePosOrderResult,
+} from '../hooks/useCreatePosOrder';
 import {
   CUSTOMER_DOC_TYPE_LABELS,
   PAYMENT_METHOD_DESCRIPTIONS,
@@ -23,8 +22,11 @@ import { selectSubtotal, useSaleStore } from '../store/saleStore';
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Callback con la orden creada — la page la usa para mostrar success. */
-  onSuccess: (order: PosOrderResponse) => void;
+  /**
+   * Callback con el resultado. Puede ser `synced` (orden creada en el back)
+   * o `queued` (sin conexión, se encoló para sync). La page decide la UX.
+   */
+  onSuccess: (result: CreatePosOrderResult) => void;
 }
 
 const PAYMENT_ICONS: Record<PaymentMethod, typeof CreditCard> = {
@@ -107,7 +109,7 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
     }
 
     try {
-      const order = await create.mutateAsync({
+      const result = await create.mutateAsync({
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         paymentMethod,
         channel: 'pos',
@@ -126,7 +128,7 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
           : undefined,
       });
       reset();
-      onSuccess(order);
+      onSuccess(result);
     } catch (err) {
       setError(
         err instanceof ApiError
