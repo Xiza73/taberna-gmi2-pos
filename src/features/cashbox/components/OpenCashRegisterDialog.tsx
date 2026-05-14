@@ -2,8 +2,11 @@ import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useOpenCashRegister } from '../hooks/useOpenCashRegister';
 import { computeAmountHint, parseCurrencyInput } from '../lib/formatters';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -18,6 +21,7 @@ interface Props {
  */
 export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
   const openMutation = useOpenCashRegister();
+  const isOnline = useOnlineStatus();
   const [amountInput, setAmountInput] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -108,7 +112,8 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
               type="submit"
               size="md"
               loading={openMutation.isPending}
-              disabled={openMutation.isPending}
+              disabled={openMutation.isPending || !isOnline}
+              title={isOnline ? undefined : OFFLINE_TOOLTIP}
             >
               {openMutation.isPending ? 'Abriendo…' : 'Abrir caja'}
             </Button>
