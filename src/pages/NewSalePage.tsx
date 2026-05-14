@@ -74,9 +74,16 @@ export function NewSalePage() {
       <ChargeModal
         open={isChargeOpen}
         onOpenChange={setIsChargeOpen}
-        onSuccess={(order) => {
+        onSuccess={(result) => {
           setIsChargeOpen(false);
-          setCompletedOrder(order);
+          if (result.kind === 'synced') {
+            setCompletedOrder(result.order);
+          } else {
+            // Venta encolada offline: el toast informa al cajero, no
+            // mostramos el overlay (no hay orderNumber todavía). El cart
+            // se limpia para arrancar la siguiente venta de inmediato.
+            clear();
+          }
         }}
       />
 

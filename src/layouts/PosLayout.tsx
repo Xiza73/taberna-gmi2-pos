@@ -2,6 +2,10 @@ import { Link, Outlet } from '@tanstack/react-router';
 import { LogOut, Sparkles, User, WifiOff } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { CashRegisterStatusBadge } from '@/features/cashbox';
+import {
+  PendingOrdersBadge,
+  useAutoSyncOnReconnect,
+} from '@/features/offline-sync';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/utils/cn';
 
@@ -20,6 +24,9 @@ const NAV_ACTIVE_CLASSES = 'bg-muted text-foreground';
 export function PosLayout() {
   const { me, logout, isLoggingOut } = useAuth();
   const isOnline = useOnlineStatus();
+  // Worker singleton: dispara sync al reconectar y al recuperar la app
+  // con pendientes en cola. Único punto de montaje en toda la app.
+  useAutoSyncOnReconnect();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -69,6 +76,7 @@ export function PosLayout() {
               <span className="hidden sm:inline">Modo offline</span>
             </span>
           )}
+          <PendingOrdersBadge />
           <CashRegisterStatusBadge />
           {me && (
             <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
