@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import type { Product } from '@/types/product';
 
 /**
  * Item de la venta en curso. Es un snapshot del producto al momento de
@@ -17,10 +16,24 @@ export interface SaleItem {
   maxStock: number;
 }
 
+/**
+ * Forma mínima que necesita `addItem`. Tanto `Product` (API) como
+ * `CachedProduct` (Dexie) la satisfacen, permitiendo agregar al cart
+ * desde el grid offline-first sin acoplar el store a un tipo concreto.
+ */
+export interface AddableProduct {
+  id: string;
+  name: string;
+  images: string[];
+  /** Cents PEN. */
+  price: number;
+  stock: number;
+}
+
 interface SaleState {
   items: SaleItem[];
   /** Si el producto ya está en el cart, incrementa cantidad (clamp a maxStock). */
-  addItem: (product: Product) => void;
+  addItem: (product: AddableProduct) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   /** Limpia todos los items — se llama después de cobrar exitosamente. */

@@ -1,8 +1,8 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import { LogOut, Sparkles, User, WifiOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth';
 import { CashRegisterStatusBadge } from '@/features/cashbox';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/utils/cn';
 
 const NAV_BASE_CLASSES =
@@ -92,28 +92,4 @@ export function PosLayout() {
       </div>
     </div>
   );
-}
-
-/**
- * Hook chiquito para tracking de connectivity. Se usará después como base
- * del banner offline + sync queue trigger.
- */
-function useOnlineStatus(): boolean {
-  const [online, setOnline] = useState<boolean>(() =>
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
-  );
-
-  useEffect(() => {
-    function update() {
-      setOnline(navigator.onLine);
-    }
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    return () => {
-      window.removeEventListener('online', update);
-      window.removeEventListener('offline', update);
-    };
-  }, []);
-
-  return online;
 }

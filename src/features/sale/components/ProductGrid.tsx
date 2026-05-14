@@ -1,24 +1,26 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ImageOff, Search, X } from 'lucide-react';
-import { useProducts, useCategories } from '@/features/catalog';
+import { useCachedProducts, useCategories } from '@/features/catalog';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { Product } from '@/types/product';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import type { CachedProduct } from '@/db';
 import { cn } from '@/utils/cn';
 import { formatPEN } from '@/utils/format';
 
-const PRODUCTS_PAGE_SIZE = 50;
-
 interface Props {
-  onProductClick: (product: Product) => void;
+  onProductClick: (product: CachedProduct) => void;
 }
 
 /**
- * Grid táctil de productos del catálogo. Filtros: search con debounce 250ms
- * + categoría (pills horizontales con scroll). Cada card es clicable —
- * agrega al cart de venta. Muestra "Agotado" disabled si stock=0.
+ * Grid táctil de productos del catálogo. Fuente: cache Dexie (offline-first).
+ * Los filtros (search con debounce 250ms + categoría) se aplican en memoria
+ * sobre el array cacheado — no hay round-trip al back.
  *
- * Pedimos limit=50 por request; si el catálogo es más grande, agregamos
- * paginación o virtual scroll en una iteración siguiente.
+ * Estados:
+ * - Cargando cache → skeleton
+ * - Cache vacío + sincronizando → "Cargando catálogo…"
+ * - Cache vacío + offline → mensaje pidiendo conexión
+ * - Cache con productos → grid filtrable
  */
 export function ProductGrid({ onProductClick }: Props) {
   const [searchInput, setSearchInput] = useState('');
@@ -26,14 +28,20 @@ export function ProductGrid({ onProductClick }: Props) {
   const search = useDebounce(searchInput, 250);
 
   const { topLevel: topCategories } = useCategories();
+  const isOnline = useOnlineStatus();
 
-  const { data, isLoading, isError, error } = useProducts({
-    page: 1,
-    limit: PRODUCTS_PAGE_SIZE,
-    search: search || undefined,
-    categoryId: selectedCategoryId ?? undefined,
-    sortBy: 'name',
-  });
+  const { products, isLoading, isSyncing } = useCachedProducts();
+
+  const filtered = useMemo<CachedProduct[]>(() => {
+    const term = search.trim().toLowerCase();
+    return products
+      .filter((p) => p.isActive)
+      .filter((p) => (selectedCategoryId ? p.categoryId === selectedCategoryId : true))
+      .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es-PE'));
+  }, [products, search, selectedCategoryId]);
+
+  const isCacheEmpty = !isLoading && products.length === 0;
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -85,16 +93,36 @@ export function ProductGrid({ onProductClick }: Props) {
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-        {isError ? (
-          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm text-destructive">No se pudieron cargar los productos.</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {error instanceof Error ? error.message : 'Error desconocido'}
+        {isLoading ? (
+          <ProductsSkeleton />
+        ) : isCacheEmpty && isSyncing ? (
+          <div className="rounded-md border border-border bg-card/50 p-10 text-center">
+            <p className="text-base mb-1" style={{ fontWeight: 500 }}>
+              Cargando catálogo…
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Descargando productos desde el servidor.
             </p>
           </div>
-        ) : isLoading ? (
-          <ProductsSkeleton />
-        ) : !data || data.items.length === 0 ? (
+        ) : isCacheEmpty && !isOnline ? (
+          <div className="rounded-md border border-border bg-card/50 p-10 text-center">
+            <p className="text-base mb-1" style={{ fontWeight: 500 }}>
+              Sin catálogo descargado
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Conéctate a internet para descargar productos.
+            </p>
+          </div>
+        ) : isCacheEmpty ? (
+          <div className="rounded-md border border-border bg-card/50 p-10 text-center">
+            <p className="text-base mb-1" style={{ fontWeight: 500 }}>
+              Catálogo vacío
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Toca "Refrescar catálogo" para descargar los productos.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="rounded-md border border-border bg-card/50 p-10 text-center">
             <p className="text-base mb-1" style={{ fontWeight: 500 }}>
               Sin resultados
@@ -105,7 +133,7 @@ export function ProductGrid({ onProductClick }: Props) {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-            {data.items.map((product) => (
+            {filtered.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -123,7 +151,7 @@ function ProductCard({
   product,
   onClick,
 }: {
-  product: Product;
+  product: CachedProduct;
   onClick: () => void;
 }) {
   const isOutOfStock = product.stock === 0;
