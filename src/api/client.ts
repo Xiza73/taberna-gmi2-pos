@@ -59,12 +59,20 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     const refresh = getRefreshToken();
     if (!refresh) throw new ApiError(401, 'UNAUTHORIZED', 'No refresh token');
 
-    const res = await fetch(`${buildBase()}${config.refreshPath}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: refresh }),
-      credentials: 'omit',
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${buildBase()}${config.refreshPath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refresh }),
+        credentials: 'omit',
+      });
+    } catch (e) {
+      // Offline / DNS / TLS / connection reset — distinguible del 401 real.
+      // Importante en POS: no queremos forzar logout si la tablet está sin
+      // red; el refresh se reintentará cuando vuelva la conexión.
+      throw new ApiError(0, 'NETWORK_ERROR', (e as Error).message || 'Network error');
+    }
 
     const body = (await res.json().catch(() => null)) as BaseResponse<AuthTokens> | null;
     if (!res.ok || !body || !body.success) {
@@ -130,7 +138,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       try {
         const newToken = await refreshAccessToken();
         res = await attempt(method, url, opts, newToken);
-      } catch {
+      } catch (refreshErr) {
+        // Si el refresh fallo por red (offline), NO limpiamos tokens ni
+        // emitimos auth-expired — la sesión sigue siendo válida, solo no
+        // hay conexión. Propagamos el error de red para que el caller
+        // muestre el estado offline. La próxima request volverá a intentar
+        // cuando vuelva la conectividad.
+        if (refreshErr instanceof ApiError && refreshErr.code === 'NETWORK_ERROR') {
+          throw refreshErr;
+        }
         clearTokens();
         emitAuthExpired();
         throw new ApiError(401, 'UNAUTHORIZED', 'Session expired');

@@ -1,6 +1,6 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import { LogOut, Sparkles, User, WifiOff } from 'lucide-react';
-import { useAuth } from '@/features/auth';
+import { useAuth, useAuthExpiredListener } from '@/features/auth';
 import { CashRegisterStatusBadge } from '@/features/cashbox';
 import {
   PendingOrdersBadge,
@@ -27,6 +27,8 @@ export function PosLayout() {
   // Worker singleton: dispara sync al reconectar y al recuperar la app
   // con pendientes en cola. Único punto de montaje en toda la app.
   useAutoSyncOnReconnect();
+  // Toast persistente cuando expira la sesión (especialmente útil offline).
+  useAuthExpiredListener();
 
   return (
     <div className="min-h-screen flex flex-col">
