@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
+import { useCurrentCashRegister } from '../hooks/useCurrentCashRegister';
 import { useOpenCashRegister } from '../hooks/useOpenCashRegister';
 import { computeAmountHint, parseCurrencyInput } from '../lib/formatters';
 
@@ -18,6 +19,11 @@ interface Props {
  */
 export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
   const openMutation = useOpenCashRegister();
+  // Guard: si ya hay una caja abierta para el staff actual, no permitimos
+  // abrir otra. El back también lo rechaza (409), pero acá lo
+  // bloqueamos al frente para evitar el roundtrip y dar feedback claro.
+  const { data: current } = useCurrentCashRegister();
+  const hasOpenRegister = Boolean(current);
   const [amountInput, setAmountInput] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +44,11 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (hasOpenRegister) {
+      setError('Ya tenés una caja abierta — cerrá la actual primero.');
+      return;
+    }
 
     const trimmed = amountInput.trim();
     if (!trimmed) {
@@ -69,6 +80,15 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          {hasOpenRegister && (
+            <div
+              role="alert"
+              data-testid="open-cash-register-already-open"
+              className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-amber-400"
+            >
+              Ya tenés una caja abierta — cerrá la actual primero.
+            </div>
+          )}
           <Input
             label="Monto inicial en caja (en soles)"
             type="text"
@@ -76,7 +96,7 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
             placeholder="0.00"
             value={amountInput}
             onChange={(e) => setAmountInput(e.target.value)}
-            disabled={openMutation.isPending}
+            disabled={openMutation.isPending || hasOpenRegister}
             hint={computeAmountHint(
               amountInput,
               'Cantidad en efectivo que tenés en caja al empezar el turno',
@@ -108,7 +128,8 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
               type="submit"
               size="md"
               loading={openMutation.isPending}
-              disabled={openMutation.isPending}
+              disabled={openMutation.isPending || hasOpenRegister}
+              title={hasOpenRegister ? 'Ya tenés una caja abierta' : undefined}
             >
               {openMutation.isPending ? 'Abriendo…' : 'Abrir caja'}
             </Button>
