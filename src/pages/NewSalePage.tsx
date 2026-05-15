@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ShieldOff } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { RefreshCatalogButton } from '@/features/catalog';
+import { NoPermissionsState } from '@/components/NoPermissionsState';
 import {
   ChargeModal,
   ProductGrid,
@@ -21,35 +21,14 @@ import type { PosOrderResponse } from '@/types/posOrder';
  * 403 que vendría del back de cualquier modo.
  */
 export function NewSalePage() {
-  const { me, canUsePos } = useAuth();
+  const { canUsePos } = useAuth();
   const addItem = useSaleStore((s) => s.addItem);
   const clear = useSaleStore((s) => s.clear);
   const [isChargeOpen, setIsChargeOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<PosOrderResponse | null>(null);
 
   if (!canUsePos) {
-    return (
-      <main className="h-full flex items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-destructive/10">
-            <ShieldOff size={26} className="text-destructive" />
-          </div>
-          <h1
-            className="text-2xl"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
-          >
-            Sin permisos
-          </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            El POS está disponible solo para administradores.
-            {me && ` Tu cuenta (${me.name}) tiene rol "${me.role}".`}
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Pedile a un super admin que ajuste tu rol desde el backoffice.
-          </p>
-        </div>
-      </main>
-    );
+    return <NoPermissionsState message="El POS está disponible solo para administradores." />;
   }
 
   function handleNewSale() {

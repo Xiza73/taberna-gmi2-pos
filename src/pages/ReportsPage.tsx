@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ShieldOff } from 'lucide-react';
 import { useAuth } from '@/features/auth';
+import { NoPermissionsState } from '@/components/NoPermissionsState';
 import {
   DailyReport,
   PaymentMethodReport,
@@ -15,27 +15,12 @@ import {
  * oculta para roles distintos a super_admin (el back devuelve 403 igual).
  */
 export function ReportsPage() {
-  const { me, role, canUsePos } = useAuth();
+  const { role, canUsePos } = useAuth();
   const [tab, setTab] = useState<ReportTab>('daily');
   const isSuperAdmin = role === 'super_admin';
 
   if (!canUsePos) {
-    return (
-      <main className="h-full flex items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-destructive/10">
-            <ShieldOff size={26} className="text-destructive" />
-          </div>
-          <h1 className="text-2xl" style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-            Sin permisos
-          </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Esta pantalla está disponible solo para administradores.
-            {me && ` Tu cuenta (${me.name}) tiene rol "${me.role}".`}
-          </p>
-        </div>
-      </main>
-    );
+    return <NoPermissionsState message="Esta pantalla está disponible solo para administradores." />;
   }
 
   // Defensa extra: si el rol cambia a no-super_admin mientras el tab

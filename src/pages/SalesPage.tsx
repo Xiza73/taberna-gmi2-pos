@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, ShieldOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { NoPermissionsState } from '@/components/NoPermissionsState';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth';
 import {
@@ -58,7 +59,7 @@ interface FilterState {
  * llegan en slices 3b y 3c).
  */
 export function SalesPage() {
-  const { me, canUsePos } = useAuth();
+  const { canUsePos } = useAuth();
   const [filters, setFilters] = useState<FilterState>(() => ({
     date: todayLocal(),
     status: undefined,
@@ -102,25 +103,7 @@ export function SalesPage() {
   }
 
   if (!canUsePos) {
-    return (
-      <main className="h-full flex items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-destructive/10">
-            <ShieldOff size={26} className="text-destructive" />
-          </div>
-          <h1
-            className="text-2xl"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}
-          >
-            Sin permisos
-          </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Esta pantalla está disponible solo para administradores.
-            {me && ` Tu cuenta (${me.name}) tiene rol "${me.role}".`}
-          </p>
-        </div>
-      </main>
-    );
+    return <NoPermissionsState message="Esta pantalla está disponible solo para administradores." />;
   }
 
   const total = data?.total ?? 0;
