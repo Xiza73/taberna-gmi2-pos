@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, Inbox, Loader2 } from 'lucide-react';
+import { AlertTriangle, Inbox, Loader2, WifiOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatCents } from '@/features/cashbox/lib/formatters';
 import { PAYMENT_METHOD_LABELS } from '@/features/sales';
 import type { PaymentMethod } from '@/types/posOrder';
@@ -20,6 +21,7 @@ const RANGE_INVALID_ERROR = "El 'Desde' debe ser anterior o igual al 'Hasta'.";
 export function PaymentMethodReport() {
   const [range, setRange] = useState(() => defaultRange());
   const isInvalid = range.dateFrom > range.dateTo;
+  const online = useOnlineStatus();
   const { data, isLoading, isFetching, isError } = usePaymentMethodReport(
     range.dateFrom,
     range.dateTo,
@@ -30,6 +32,7 @@ export function PaymentMethodReport() {
 
   return (
     <div className="space-y-5">
+      {!online && <OfflineBanner />}
       <RangeFilters
         idPrefix="payment-method-report"
         dateFrom={range.dateFrom}
@@ -188,6 +191,18 @@ function ErrorBox() {
     >
       <AlertTriangle size={16} />
       No se pudo cargar el reporte. Intenta de nuevo en unos segundos.
+    </div>
+  );
+}
+
+function OfflineBanner() {
+  return (
+    <div
+      role="status"
+      className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2"
+    >
+      <WifiOff size={14} />
+      <span>Sin conexión — los datos pueden no estar actualizados.</span>
     </div>
   );
 }

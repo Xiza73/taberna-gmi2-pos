@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, Inbox, Loader2 } from 'lucide-react';
+import { AlertTriangle, Inbox, Loader2, WifiOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatCents } from '@/features/cashbox/lib/formatters';
 import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, getStatusChipClasses } from '@/features/sales';
 import type { OrderStatus, PaymentMethod } from '@/types/posOrder';
@@ -28,12 +29,14 @@ const AXIS_STROKE = 'var(--border)';
  */
 export function DailyReport() {
   const [date, setDate] = useState<string>(() => todayIso());
+  const online = useOnlineStatus();
   const { data, isLoading, isFetching, isError } = useDailyReport(date);
 
   const showSkeleton = isLoading && !data;
 
   return (
     <div className="space-y-5">
+      {!online && <OfflineBanner />}
       <div className="flex items-end gap-3">
         <div className="space-y-1.5">
           <label htmlFor="daily-report-date" className="block text-xs text-muted-foreground">
@@ -364,6 +367,19 @@ function ErrorBox() {
     >
       <AlertTriangle size={16} />
       No se pudo cargar el reporte. Intenta de nuevo en unos segundos.
+    </div>
+  );
+}
+
+function OfflineBanner() {
+  return (
+    <div
+      role="status"
+      data-testid="reports-offline-banner"
+      className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2"
+    >
+      <WifiOff size={14} />
+      <span>Sin conexión — los datos pueden no estar actualizados.</span>
     </div>
   );
 }
