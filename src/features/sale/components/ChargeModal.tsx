@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { ApiError } from '@/api/errors';
-import type { CustomerDocType, PaymentMethod } from '@/types/posOrder';
+import type { PaymentMethod } from '@/types/posOrder';
 import { cn } from '@/utils/cn';
 import { formatPEN } from '@/utils/format';
 import {
@@ -12,7 +12,6 @@ import {
   type CreatePosOrderResult,
 } from '../hooks/useCreatePosOrder';
 import {
-  CUSTOMER_DOC_TYPE_LABELS,
   PAYMENT_METHOD_DESCRIPTIONS,
   PAYMENT_METHOD_LABELS,
   POS_PAYMENT_METHODS,
@@ -36,17 +35,13 @@ const PAYMENT_ICONS: Record<PaymentMethod, typeof CreditCard> = {
   mercadopago: CreditCard,
 };
 
-const DOC_TYPES: CustomerDocType[] = ['dni', 'ruc'];
-
-function isValidDocNumber(type: CustomerDocType, number: string): boolean {
-  const trimmed = number.trim();
-  if (type === 'dni') return /^\d{8}$/.test(trimmed);
-  return /^\d{11}$/.test(trimmed);
-}
-
 /**
  * Modal de cobranza. Recoge método de pago + datos del cliente (mínimos:
- * solo nombre) + opcional boleta/factura → POST a `/admin/pos/orders`.
+ * solo nombre) + cupón opcional → POST a `/admin/pos/orders`.
+ *
+ * La emisión de comprobante (boleta/factura) está pospuesta — se agregará
+ * cuando se integre con SUNAT en el back. Si el cajero quiere registrar
+ * un DNI/RUC del cliente como dato libre, puede sumarlo a las notas.
  *
  * El customerName es obligatorio (back lo exige); el resto opcional. Si
  * el cliente no quiere dar nombre, podemos sugerir poner "Cliente
@@ -61,28 +56,17 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const [notes, setNotes] = useState('');
-  const [invoiceEnabled, setInvoiceEnabled] = useState(false);
-  const [docType, setDocType] = useState<CustomerDocType>('dni');
-  const [docNumber, setDocNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
-
-  const docError =
-    invoiceEnabled && docNumber.length > 0 && !isValidDocNumber(docType, docNumber)
-      ? docType === 'dni'
-        ? 'DNI debe tener 8 dígitos'
-        : 'RUC debe tener 11 dígitos'
-      : undefined;
 
   function reset() {
     setPaymentMethod('cash');
     setCustomerName('');
     setCustomerEmail('');
     setCustomerPhone('');
+    setCouponCode('');
     setNotes('');
-    setInvoiceEnabled(false);
-    setDocType('dni');
-    setDocNumber('');
     setError(null);
   }
 
@@ -100,13 +84,6 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
       setError('Ingresá el nombre del cliente.');
       return;
     }
-    if (invoiceEnabled) {
-      if (!docNumber.trim()) {
-        setError('Ingresá el número de DNI o RUC.');
-        return;
-      }
-      if (docError) return;
-    }
 
     try {
       const result = await create.mutateAsync({
@@ -116,16 +93,8 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim() || undefined,
         customerPhone: customerPhone.trim() || undefined,
-        customerDocType: invoiceEnabled ? docType : undefined,
-        customerDocNumber:
-          invoiceEnabled && docNumber.trim() ? docNumber.trim() : undefined,
+        couponCode: couponCode.trim() || undefined,
         notes: notes.trim() || undefined,
-        generateInvoice: invoiceEnabled,
-        invoiceType: invoiceEnabled
-          ? docType === 'dni'
-            ? 'boleta'
-            : 'factura'
-          : undefined,
       });
       reset();
       onSuccess(result);
@@ -163,6 +132,7 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
                     aria-pressed={selected}
                     className={cn(
                       'text-left rounded-md border p-3 transition-colors',
+                      'min-h-[44px]',
                       selected
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-card hover:border-foreground/30',
@@ -219,60 +189,17 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
             </div>
           </div>
 
-          {/* Invoice toggle */}
-          <div className="rounded-md border border-border bg-muted/30 p-3 space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={invoiceEnabled}
-                onChange={(e) => setInvoiceEnabled(e.target.checked)}
-                disabled={create.isPending}
-                className="mt-0.5 w-4 h-4 rounded border-border accent-primary cursor-pointer"
-              />
-              <div>
-                <span className="text-sm" style={{ fontWeight: 500 }}>
-                  Emitir comprobante con datos
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Boleta (DNI) o factura (RUC). Sin marcar = solo registro interno.
-                </p>
-              </div>
-            </label>
-
-            {invoiceEnabled && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <div className="flex gap-2">
-                  {DOC_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setDocType(type)}
-                      aria-pressed={docType === type}
-                      className={cn(
-                        'flex-1 px-3 py-2 rounded-sm text-sm transition-colors',
-                        docType === type
-                          ? 'bg-foreground text-background'
-                          : 'bg-card text-foreground hover:bg-secondary border border-border',
-                      )}
-                    >
-                      {CUSTOMER_DOC_TYPE_LABELS[type]}
-                    </button>
-                  ))}
-                </div>
-                <Input
-                  label={docType === 'dni' ? 'Número de DNI' : 'Número de RUC'}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={docType === 'dni' ? 8 : 11}
-                  placeholder={docType === 'dni' ? '12345678' : '20123456789'}
-                  value={docNumber}
-                  onChange={(e) => setDocNumber(e.target.value.replace(/\D/g, ''))}
-                  error={docError}
-                  hint={!docError ? (docType === 'dni' ? '8 dígitos' : '11 dígitos') : undefined}
-                  disabled={create.isPending}
-                />
-              </div>
-            )}
+          {/* Coupon */}
+          <div className="space-y-1.5">
+            <Input
+              label="Código de cupón (opcional)"
+              placeholder="VERANO10"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              disabled={create.isPending}
+              hint="Si tenés un cupón válido, el back aplica el descuento al confirmar."
+              autoCapitalize="characters"
+            />
           </div>
 
           {/* Notes */}
