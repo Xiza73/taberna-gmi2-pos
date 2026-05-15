@@ -37,6 +37,7 @@ export function useCreatePosOrder() {
           createdAt: Date.now(),
           attempts: 0,
           lastError: null,
+          nextRetryAt: null,
         });
         return { kind: 'queued', localId };
       }
