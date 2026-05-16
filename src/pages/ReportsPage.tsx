@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { OfflineNotice } from '@/components/OfflineNotice';
 import { useAuth } from '@/features/auth';
 import { NoPermissionsState } from '@/components/NoPermissionsState';
 import {
@@ -8,6 +9,7 @@ import {
   StaffSalesReport,
   type ReportTab,
 } from '@/features/reports';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 /**
  * Página de Reportes POS — slice 4 (Phase 3). Single page con 3 tabs:
@@ -16,6 +18,7 @@ import {
  */
 export function ReportsPage() {
   const { role, canUsePos } = useAuth();
+  const isOnline = useOnlineStatus();
   const [tab, setTab] = useState<ReportTab>('daily');
   const isSuperAdmin = role === 'super_admin';
 
@@ -43,13 +46,22 @@ export function ReportsPage() {
           </p>
         </header>
 
-        <ReportTabs active={effectiveTab} onChange={setTab} showStaff={isSuperAdmin} />
+        {isOnline ? (
+          <>
+            <ReportTabs active={effectiveTab} onChange={setTab} showStaff={isSuperAdmin} />
 
-        <section>
-          {effectiveTab === 'daily' && <DailyReport />}
-          {effectiveTab === 'paymentMethod' && <PaymentMethodReport />}
-          {effectiveTab === 'staff' && <StaffSalesReport enabled={isSuperAdmin} />}
-        </section>
+            <section>
+              {effectiveTab === 'daily' && <DailyReport />}
+              {effectiveTab === 'paymentMethod' && <PaymentMethodReport />}
+              {effectiveTab === 'staff' && <StaffSalesReport enabled={isSuperAdmin} />}
+            </section>
+          </>
+        ) : (
+          <OfflineNotice
+            message="Los reportes requieren conexión a internet."
+            hint="Vuelve a esta sección cuando tu conexión se restablezca."
+          />
+        )}
       </div>
     </main>
   );

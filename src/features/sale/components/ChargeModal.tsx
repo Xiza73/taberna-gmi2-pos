@@ -1,9 +1,17 @@
 import { type FormEvent, useState } from 'react';
-import { Banknote, Check, CreditCard, Smartphone, Wallet } from 'lucide-react';
+import {
+  AlertTriangle,
+  Banknote,
+  Check,
+  CreditCard,
+  Smartphone,
+  Wallet,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { ApiError } from '@/api/errors';
+import { useCurrentCashRegister } from '@/features/cashbox';
 import type { PaymentMethod } from '@/types/posOrder';
 import { cn } from '@/utils/cn';
 import { formatPEN } from '@/utils/format';
@@ -51,6 +59,10 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
   const items = useSaleStore((s) => s.items);
   const subtotal = useSaleStore(selectSubtotal);
   const create = useCreatePosOrder();
+  // Para warning de cash sin caja abierta. El back no bloquea (per spec
+  // POS docs: "recomienda tener caja abierta, warning, no bloqueo"), pero
+  // el cajero debe saber que esa venta no aparecerá en el arqueo.
+  const { data: currentCashRegister } = useCurrentCashRegister();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [customerName, setCustomerName] = useState('');
@@ -155,6 +167,21 @@ export function ChargeModal({ open, onOpenChange, onSuccess }: Props) {
                 );
               })}
             </div>
+
+            {paymentMethod === 'cash' && !currentCashRegister && (
+              <div
+                role="alert"
+                className="mt-2.5 flex items-start gap-2.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-300"
+              >
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <p className="leading-snug">
+                  No tienes caja abierta. La venta se registra normalmente, pero
+                  el efectivo <strong>no aparecerá en el arqueo</strong>. Para
+                  el arqueo, abre tu caja desde el header antes de cobrar en
+                  efectivo.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Customer fields */}

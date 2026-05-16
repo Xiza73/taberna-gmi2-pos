@@ -5,6 +5,7 @@ import { Modal, ModalContent } from '@/components/ui/Modal';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/features/auth';
 import { formatCents, formatTime } from '@/features/cashbox/lib/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatDateTime } from '@/utils/format';
 import type {
   PosOrderEventResponse,
@@ -22,6 +23,8 @@ import {
 import { CancelOrderDialog } from './CancelOrderDialog';
 import { RefundOrderDialog } from './RefundOrderDialog';
 
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
+
 interface Props {
   /** ID de la orden a mostrar. Si es null el modal está cerrado. */
   id: string | null;
@@ -36,6 +39,7 @@ export function SaleDetailModal({ id, onOpenChange }: Props) {
   const open = id !== null;
   const { data, isLoading, isError } = usePosOrder(id);
   const { role } = useAuth();
+  const isOnline = useOnlineStatus();
   const [showCancel, setShowCancel] = useState(false);
   const [showRefund, setShowRefund] = useState(false);
 
@@ -77,6 +81,7 @@ export function SaleDetailModal({ id, onOpenChange }: Props) {
               onRequestCancel={() => setShowCancel(true)}
               onRequestRefund={() => setShowRefund(true)}
               canRefund={canRefund}
+              isOnline={isOnline}
             />
           )}
         </ModalContent>
@@ -127,6 +132,7 @@ interface DetailBodyProps {
   onRequestCancel: () => void;
   onRequestRefund: () => void;
   canRefund: boolean;
+  isOnline: boolean;
 }
 
 function DetailBody({
@@ -135,6 +141,7 @@ function DetailBody({
   onRequestCancel,
   onRequestRefund,
   canRefund,
+  isOnline,
 }: DetailBodyProps) {
   const items = order.items ?? [];
   const events = order.events ?? [];
@@ -238,6 +245,8 @@ function DetailBody({
               variant="destructive"
               size="md"
               onClick={onRequestCancel}
+              disabled={!isOnline}
+              title={isOnline ? undefined : OFFLINE_TOOLTIP}
             >
               Anular venta
             </Button>
@@ -249,6 +258,8 @@ function DetailBody({
                 variant="outline"
                 size="md"
                 onClick={onRequestRefund}
+                disabled={!isOnline}
+                title={isOnline ? undefined : OFFLINE_TOOLTIP}
               >
                 Devolver
               </Button>

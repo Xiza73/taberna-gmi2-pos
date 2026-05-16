@@ -3,6 +3,7 @@ import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/utils/cn';
 import type {
   CashMovementResponse,
@@ -16,6 +17,8 @@ import {
   formatTime,
   parseCurrencyInput,
 } from '../lib/formatters';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -37,6 +40,7 @@ interface Props {
 export function MovementsDialog({ open, onOpenChange }: Props) {
   const { data: movements, isLoading } = useCashMovements(open);
   const createMutation = useCreateCashMovement();
+  const isOnline = useOnlineStatus();
 
   const [type, setType] = useState<CashMovementType>('cash_in');
   const [amountInput, setAmountInput] = useState('');
@@ -198,7 +202,8 @@ export function MovementsDialog({ open, onOpenChange }: Props) {
                 type="submit"
                 size="md"
                 loading={createMutation.isPending}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || !isOnline}
+                title={isOnline ? undefined : OFFLINE_TOOLTIP}
               >
                 {createMutation.isPending ? 'Registrando…' : 'Registrar'}
               </Button>

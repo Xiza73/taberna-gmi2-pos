@@ -2,9 +2,12 @@ import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useCurrentCashRegister } from '../hooks/useCurrentCashRegister';
 import { useOpenCashRegister } from '../hooks/useOpenCashRegister';
 import { computeAmountHint, parseCurrencyInput } from '../lib/formatters';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -24,6 +27,7 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
   // bloqueamos al frente para evitar el roundtrip y dar feedback claro.
   const { data: current } = useCurrentCashRegister();
   const hasOpenRegister = Boolean(current);
+  const isOnline = useOnlineStatus();
   const [amountInput, setAmountInput] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -71,6 +75,12 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
       // para permitir reintento.
     }
   }
+
+  const submitDisabledTitle = !isOnline
+    ? OFFLINE_TOOLTIP
+    : hasOpenRegister
+      ? 'Ya tenés una caja abierta'
+      : undefined;
 
   return (
     <Modal open={open} onOpenChange={handleOpenChange}>
@@ -128,8 +138,8 @@ export function OpenCashRegisterDialog({ open, onOpenChange }: Props) {
               type="submit"
               size="md"
               loading={openMutation.isPending}
-              disabled={openMutation.isPending || hasOpenRegister}
-              title={hasOpenRegister ? 'Ya tenés una caja abierta' : undefined}
+              disabled={openMutation.isPending || hasOpenRegister || !isOnline}
+              title={submitDisabledTitle}
             >
               {openMutation.isPending ? 'Abriendo…' : 'Abrir caja'}
             </Button>

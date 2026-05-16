@@ -4,12 +4,15 @@ import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { cn } from '@/utils/cn';
 import { formatCents } from '@/features/cashbox/lib/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type {
   PosOrderItemResponse,
   PosOrderResponse,
   RefundPosOrderInput,
 } from '@/types/posOrder';
 import { useRefundPosOrder } from '../hooks/useRefundPosOrder';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -38,6 +41,7 @@ export function RefundOrderDialog({
   onRefunded,
 }: Props) {
   const refundMutation = useRefundPosOrder();
+  const isOnline = useOnlineStatus();
   const items = order.items ?? [];
 
   const [mode, setMode] = useState<RefundMode>('total');
@@ -196,7 +200,8 @@ export function RefundOrderDialog({
               variant="destructive"
               size="md"
               loading={refundMutation.isPending}
-              disabled={refundMutation.isPending}
+              disabled={refundMutation.isPending || !isOnline}
+              title={isOnline ? undefined : OFFLINE_TOOLTIP}
             >
               {refundMutation.isPending ? 'Procesando…' : 'Confirmar devolución'}
             </Button>

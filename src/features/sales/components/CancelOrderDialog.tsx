@@ -3,8 +3,11 @@ import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent } from '@/components/ui/Modal';
 import { formatCents } from '@/features/cashbox/lib/formatters';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { PosOrderResponse } from '@/types/posOrder';
 import { useCancelPosOrder } from '../hooks/useCancelPosOrder';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -31,6 +34,7 @@ export function CancelOrderDialog({
   onCancelled,
 }: Props) {
   const cancelMutation = useCancelPosOrder();
+  const isOnline = useOnlineStatus();
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -140,7 +144,8 @@ export function CancelOrderDialog({
               variant="destructive"
               size="md"
               loading={cancelMutation.isPending}
-              disabled={cancelMutation.isPending}
+              disabled={cancelMutation.isPending || !isOnline}
+              title={isOnline ? undefined : OFFLINE_TOOLTIP}
             >
               {cancelMutation.isPending ? 'Anulando…' : 'Confirmar anular'}
             </Button>

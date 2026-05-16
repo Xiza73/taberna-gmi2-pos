@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal, ModalContent } from '@/components/ui/Modal';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/utils/cn';
 import type { CashRegisterResponse } from '@/types/cashRegister';
 import { useCloseCashRegister } from '../hooks/useCloseCashRegister';
@@ -14,6 +15,8 @@ import {
   formatElapsed,
   parseCurrencyInput,
 } from '../lib/formatters';
+
+const OFFLINE_TOOLTIP = 'Requiere conexión a internet';
 
 interface Props {
   open: boolean;
@@ -36,6 +39,7 @@ interface Props {
 export function CloseCashRegisterDialog({ open, onOpenChange, current }: Props) {
   const queryClient = useQueryClient();
   const closeMutation = useCloseCashRegister();
+  const isOnline = useOnlineStatus();
   const [amountInput, setAmountInput] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -196,7 +200,8 @@ export function CloseCashRegisterDialog({ open, onOpenChange, current }: Props) 
                 variant="destructive"
                 size="md"
                 loading={closeMutation.isPending}
-                disabled={closeMutation.isPending}
+                disabled={closeMutation.isPending || !isOnline}
+                title={isOnline ? undefined : OFFLINE_TOOLTIP}
               >
                 {closeMutation.isPending ? 'Cerrando…' : 'Cerrar caja'}
               </Button>
